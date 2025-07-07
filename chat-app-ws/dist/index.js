@@ -1,43 +1,39 @@
 "use strict";
-// remember  in the websocket you can not communicate with json object
-// hmesha hmare pass string ya binary m baat kar skte hai
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = require("ws");
 const wss = new ws_1.WebSocketServer({ port: 8080 });
-// let allSocket: WebSocket[]=[]; // [socket1 , socket2, socket3]
-// User is the type of the array we have build it
 let allSocket = [];
-let count = 0;
 wss.on("connection", (socket) => {
     socket.on("message", (message) => {
-        // {} i want object but message is string type
+        // always parse incoming JSON string
         // @ts-ignore
         const parseMessage = JSON.parse(message);
-        // console.log("hello");
-        if (parseMessage.type == "join") {
-            count++;
-            console.log(count);
+        if (parseMessage.type === "join") {
             allSocket.push({
                 socket,
                 room: parseMessage.payload.roomId,
+                name: parseMessage.payload.sender // make sure frontend sends this
             });
         }
-        else {
-            // when someone  in the room wants to chat 
-            if (parseMessage.type == "chat") {
-                //  first find the room of this person  and send message to all the other person which are present in this room
-                // 1. first identify that socket corresponding  roomId
-                const currentUserRoom = allSocket.find((x) => x.socket == socket);
-                // send the message to all other personn which are present in that  room
-                for (let i = 0; i < allSocket.length; i++) {
-                    if (allSocket[i].room == (currentUserRoom === null || currentUserRoom === void 0 ? void 0 : currentUserRoom.room)) {
-                        allSocket[i].socket.send(parseMessage.payload.message);
-                    }
+        else if (parseMessage.type === "chat") {
+            // find the sender's details
+            const currentUser = allSocket.find((x) => x.socket === socket);
+            if (!currentUser)
+                return;
+            // send message to all others in the same room
+            for (let user of allSocket) {
+                if (user.socket === socket)
+                    continue;
+                if (user.room === currentUser.room) {
+                    user.socket.send(JSON.stringify({
+                        sender: currentUser.name,
+                        message: parseMessage.payload.message
+                    }));
                 }
             }
         }
     });
-    socket.on("disconnect", () => {
-        allSocket = allSocket.filter((x) => x.socket != socket);
+    socket.on("close", () => {
+        allSocket = allSocket.filter((x) => x.socket !== socket);
     });
 });
