@@ -5,24 +5,20 @@ const wss = new ws_1.WebSocketServer({ port: 8080 });
 let allSocket = [];
 wss.on("connection", (socket) => {
     socket.on("message", (message) => {
-        // always parse incoming JSON string
-        // @ts-ignore
-        const parseMessage = JSON.parse(message);
+        const parseMessage = JSON.parse(message.toString());
         if (parseMessage.type === "join") {
             allSocket.push({
                 socket,
                 room: parseMessage.payload.roomId,
-                name: parseMessage.payload.sender // make sure frontend sends this
+                name: parseMessage.payload.sender
             });
         }
         else if (parseMessage.type === "chat") {
-            // find the sender's details
             const currentUser = allSocket.find((x) => x.socket === socket);
             if (!currentUser)
                 return;
-            // send message to all others in the same room
             for (let user of allSocket) {
-                if (user.socket === socket)
+                if (user.socket == socket)
                     continue;
                 if (user.room === currentUser.room) {
                     user.socket.send(JSON.stringify({

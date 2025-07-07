@@ -12,9 +12,7 @@ let allSocket: User[] = [];
 
 wss.on("connection", (socket) => {
   socket.on("message", (message) => {
-    // always parse incoming JSON string
-    // @ts-ignore
-    const parseMessage = JSON.parse(message);
+    const parseMessage = JSON.parse(message.toString());
 
     if (parseMessage.type === "join") {
       allSocket.push({
@@ -27,7 +25,7 @@ wss.on("connection", (socket) => {
       if (!currentUser) return;
 
       for (let user of allSocket) {
-        if (user.socket === socket) continue;
+        if(user.socket==socket) continue;
         if (user.room === currentUser.room) {
           user.socket.send(
             JSON.stringify({
