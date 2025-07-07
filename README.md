@@ -1,1 +1,1 @@
-![Chat UI Screenshot](chat-ui.png)
+![Chat UI Screenshot](chat-app.png)
